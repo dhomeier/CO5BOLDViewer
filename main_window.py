@@ -17,6 +17,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import uio
 import time
+import re
 from opta import Opac
 import subclasses as sc
 import windows as wind
@@ -343,9 +344,15 @@ class MainWindow(wind.BasicWindow):
                                       ("Avg. squared magnetic field (y-component)", "bc2_xmean2"),
                                       ("Avg. squared magnetic field (z-component)", "bc3_xmean2")]),
 
-            self.quantityList = [OrderedDict([("Bolometric intensity", "intb3_r"), ("Intensity (bin 1)", "int01b3_r"),
-                                              ("Intensity (bin 2)", "int02b3_r"), ("Intensity (bin 3)", "int03b3_r"),
-                                              ("Intensity (bin 4)", "int04b3_r"), ("Intensity (bin 5)", "int05b3_r")])]
+            # --- First list component: intensities in topmost layer
+            # --- Second list component: density averaged over plane (1D!)
+
+            self.quantityList =  [OrderedDict([("Bolometric intensity", "intb3_r")])]
+            # --- append intensities in all (up to 32...) opacity bins found
+            for i in range(1,33):
+                ibr = "int{:02d}b3_r".format(i)
+                if ibr in self.modelfile[0].dataset[0].box[0]:
+                    self.quantityList[0]["Intensity (bin {:d})".format(i)] = ibr
         elif fil == "Model files (*.full *.end *.sta)":
             self.fileType = "cobold"
 
@@ -460,6 +467,7 @@ class MainWindow(wind.BasicWindow):
                                               ("Local Velocity Field (y-component)", 'v_local_y'),
                                               ("Local Velocity Field (z-component)", 'v_local_z')
                                               ])]
+
         else:
             self.msgBox.setText("Data format unknown.")
             self.msgBox.exec_()
@@ -570,6 +578,10 @@ class MainWindow(wind.BasicWindow):
                 self.tauUnityCheck.setDisabled(False)
                 self.x3Combo.setDisabled(False)
             self.quantityCombo.addItems(self.quantityList[-1].keys())
+
+            self.quantityCombo.clear()
+            for type in self.quantityList:
+                self.quantityCombo.addItems(type.keys())
 
             self.eos = True
 

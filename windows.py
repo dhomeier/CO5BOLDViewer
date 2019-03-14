@@ -6,6 +6,7 @@ Created on Apr 29 19:06 2017
 """
 
 import time
+import re
 import math
 import bisect
 import numpy as np
@@ -45,7 +46,7 @@ class PlotCanvas(FigureCanvas):
 
 class BasicWindow(QtWidgets.QMainWindow):
     def __init__(self):
-        self.version = "0.9.7 hotfix 2"
+        self.version = "0.9.8 hotfix 3"
         super(BasicWindow, self).__init__()
 
         self.centralWidget = QtWidgets.QWidget(self)
@@ -773,7 +774,8 @@ class BasicWindow(QtWidgets.QMainWindow):
             if not self.opa or not self.eos:
                 self.x3Combo.setCurrentIndex(0)
                 self.x3Combo.setDisabled(True)
-                self.quantityCombo.setCurrentIndex(1)
+                if self.fileType == "cobold":
+                    self.quantityCombo.setCurrentIndex(1)
             elif self.opa and self.eos and self.x3Combo.currentIndex() == 1:
                 rho = self.modelfile[self.modelind].dataset[self.dsind].box[0]["rho"].data
                 ei = self.modelfile[self.modelind].dataset[self.dsind].box[0]["ei"].data
@@ -1058,7 +1060,9 @@ class BasicWindow(QtWidgets.QMainWindow):
         else:
             self.data = self.setQuantity(self.modelind, self.dsind)
 
-        self.unitLabel.setText(self.unit)
+        # --- HTML-style rendering of exponents
+        self.unitLabel.setText(re.sub(r'(\^)(-{,1}\d{1})', r'<sup>\2</sup>', self.unit))
+
         if self.dataRangeCheck.checkState() == QtCore.Qt.Checked:
             self.getTotalMinMax()
 
@@ -1207,7 +1211,7 @@ class BasicWindow(QtWidgets.QMainWindow):
         self.senders.append(self.sender().objectName())
         self.statusBar().showMessage("Initialize arrays...")
         start = time.time()
-        clight = 2.998e10
+        clight = 2.9979248e10
         const = 4.0 * np.pi
 
         ver = np.version.version
@@ -2177,9 +2181,15 @@ class MultiPlotWind(BasicWindow):
                                       ("Avg. squared magnetic field (y-component)", "bc2_xmean2"),
                                       ("Avg. squared magnetic field (z-component)", "bc3_xmean2")]),
 
-            self.quantityList = [OrderedDict([("Bolometric intensity", "intb3_r"), ("Intensity (bin 1)", "int01b3_r"),
-                                              ("Intensity (bin 2)", "int02b3_r"), ("Intensity (bin 3)", "int03b3_r"),
-                                              ("Intensity (bin 4)", "int04b3_r"), ("Intensity (bin 5)", "int05b3_r")])]
+            # --- First list component: intensities in topmost layer
+            # --- Second list component: density averaged over plane (1D!)
+
+            self.quantityList =  [OrderedDict([("Bolometric intensity", "intb3_r")])]
+            # --- append intensities in all (up to 32...) opacity bins found
+            for i in range(1,33):
+                ibr = "int{:02d}b3_r".format(i)
+                if ibr in self.modelfile[0].dataset[0].box[0]:
+                    self.quantityList[0]["Intensity (bin {:d})".format(i)] = ibr
         elif self.fileType == "cobold":
 
             # --- content from .full or .end file (has one box per dataset) ---
@@ -2260,7 +2270,6 @@ class MultiPlotWind(BasicWindow):
             self.quantityCombo.clear()
 
             for type in self.quantityList:
-                print("Adding", type.keys())
                 self.quantityCombo.addItems(type.keys())
             self.initialLoad()
 
