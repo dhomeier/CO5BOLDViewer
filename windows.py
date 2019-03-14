@@ -1069,11 +1069,7 @@ class BasicWindow(QtWidgets.QMainWindow):
         self.cmInvert.setDisabled(False)
         self.fixPlotWindowCheck.setDisabled(False)
         self.quantityCombo.setDisabled(False)
-
-        if self.cmInvert.checkState() == QtCore.Qt.Checked:
-            self.invertCM(True)
-        else:
-            self.invertCM(False)
+        self.invertCM()
 
         self.planeCheck()
         print("Time needed for initial load:", time.time()-start)
@@ -1188,13 +1184,13 @@ class BasicWindow(QtWidgets.QMainWindow):
         # if state == QtCore.Qt.Checked:
         #     self.getTotalMinMax()
 
-    def invertCM(self, state):
+    def invertCM(self):
         self.senders.append(self.sender().objectName())
-        if state == QtCore.Qt.Checked:
+        if self.cmInvert.checkState() == QtCore.Qt.Checked:
             self.cmCombo.inv = "_r"
-
         else:
             self.cmCombo.inv = ""
+
         self.cmCombo.currentCmap = self.cmCombo.currentText() + self.cmCombo.inv
         self.plotBox.colorChange(self.cmCombo.currentCmap)
         self.colorbar.set_cmap(self.cmCombo.currentCmap)
@@ -2309,12 +2305,12 @@ class MultiPlotWind(BasicWindow):
 
         self.controlgrid.addWidget(addPlotGroup)
 
-    def invertCM(self, state):
-        if state == QtCore.Qt.Checked:
+    def invertCM(self):
+        if self.cmInvert.checkState() == QtCore.Qt.Checked:
             self.cmCombo.inv = "_r"
-
         else:
             self.cmCombo.inv = ""
+
         self.cmCombo.currentCmap = self.cmCombo.currentText() + self.cmCombo.inv
         # self.plotBox.colorChange(self.cmCombo.currentCmap)
         self.colorbar.set_cmap(self.cmCombo.currentCmap)
