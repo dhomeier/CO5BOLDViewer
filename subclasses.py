@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavTool
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 # from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 # import vtk
@@ -26,8 +27,8 @@ import h5py
 # ----------------------------------
 
 class PlotWidget(FigureCanvas):
-    def __init__(self, parent=None):
-        self.fig = plt.figure(figsize=(8, 6), dpi=100)
+    def __init__(self, parent=None, width=16, height=12, dpi=50):
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
         super(PlotWidget, self).__init__(self.fig)
 
         FigureCanvas.__init__(self, self.fig)
@@ -35,7 +36,7 @@ class PlotWidget(FigureCanvas):
         self.setParent(parent)
         
         self.ax = self.fig.add_subplot(111)
-#        self.ax = self.fig.add_axes(aspect="equal",extent=[0, 10, 0, 10])
+        #self.ax = self.fig.add_axes(aspect="equal",extent=[0, 10, 0, 10])
         
         self.toolbar = NavTool(self, self)
         
@@ -45,6 +46,8 @@ class PlotWidget(FigureCanvas):
 
         self.image = self.ax.imshow(data, interpolation="bilinear", origin="bottom")
         self.fig.tight_layout()
+        #self.ax.tick_params(labelsize='small')
+        #self.ax.ticklabel_format(style='sci', scilimits=(-3, 4))
 
     def plotFig(self, data, limits=None, window=None, vmin=None, vmax=None, cmap="inferno", pos=None, tauUnity=None):
         """

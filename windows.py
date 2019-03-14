@@ -14,24 +14,43 @@ from collections import OrderedDict
 from scipy import interpolate as ip
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QSizePolicy
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as cl
 import matplotlib.colorbar as clbar
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 import mdis
 import subclasses as sc
 
 
+class PlotCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=16, height=12, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_axes([0, 0, 1, 1])
+
+        FigureCanvas.__init__(self, fig)
+        self.setParent(parent)
+
+        FigureCanvas.setSizePolicy(self,
+                QSizePolicy.Expanding,
+                QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
+        #self.axes.tick_params(labelsize='small')
+        #self.axes.ticklabel_format(style='sci', scilimits=(-3, 4))
+        self.show()
+
+
 class BasicWindow(QtWidgets.QMainWindow):
     def __init__(self):
-        self.version = "0.9.7 hotfix 1"
+        self.version = "0.9.7 hotfix 2"
         super(BasicWindow, self).__init__()
 
         self.centralWidget = QtWidgets.QWidget(self)
 
-        QtWidgets.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
+        QtWidgets.QToolTip.setFont(QtGui.QFont('SansSerif', 8))
 
         self.initializeParams()
         self.setGridLayout()
@@ -486,6 +505,7 @@ class BasicWindow(QtWidgets.QMainWindow):
         self.quantityCombo.clear()
         self.quantityCombo.setDisabled(True)
         self.quantityCombo.setObjectName("quantity-Combo")
+        #self.quantityCombo.setProperty("currentText", "Internal energy")
         self.quantityCombo.activated.connect(self.quantityChange)
 
         quantityLabel = QtWidgets.QLabel("Quantity:")
@@ -516,13 +536,11 @@ class BasicWindow(QtWidgets.QMainWindow):
 
         # --- Colorbar ---
 
-        colorfig = plt.figure()
-
-        self.colorcanvas = FigureCanvas(colorfig)
+        self.colorcanvas = PlotCanvas()
         self.colorcanvas.setMinimumHeight(20)
         self.colorcanvas.setMaximumHeight(20)
 
-        colorax = colorfig.add_axes([0, 0, 1, 1])
+        colorax = self.colorcanvas.axes
         norm = cl.Normalize(0, 1)
         self.colorbar = clbar.ColorbarBase(colorax, orientation="horizontal", norm=norm)
         self.colorbar.set_ticks([0])
@@ -755,6 +773,7 @@ class BasicWindow(QtWidgets.QMainWindow):
             if not self.opa or not self.eos:
                 self.x3Combo.setCurrentIndex(0)
                 self.x3Combo.setDisabled(True)
+                self.quantityCombo.setCurrentIndex(1)
             elif self.opa and self.eos and self.x3Combo.currentIndex() == 1:
                 rho = self.modelfile[self.modelind].dataset[self.dsind].box[0]["rho"].data
                 ei = self.modelfile[self.modelind].dataset[self.dsind].box[0]["ei"].data
@@ -2241,6 +2260,7 @@ class MultiPlotWind(BasicWindow):
             self.quantityCombo.clear()
 
             for type in self.quantityList:
+                print("Adding", type.keys())
                 self.quantityCombo.addItems(type.keys())
             self.initialLoad()
 
