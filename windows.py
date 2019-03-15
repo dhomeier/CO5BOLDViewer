@@ -1468,6 +1468,23 @@ class BasicWindow(QtWidgets.QMainWindow):
 
                 data = self.Eos.STP(rho, ei, quantity=self.quantityCombo.currentText())
                 self.unit = self.Eos.unit(quantity=self.quantityCombo.currentText())
+            elif self.quantityCombo.currentText() in ["Entropy fluctuation s-<s>z", "Temperature fluctuation T-<T>z"]:
+                baseqt = self.quantityCombo.currentText().split()[0]
+                rho = self.modelfile[mod].dataset[dat].box[0]["rho"].data
+                ei = self.modelfile[mod].dataset[dat].box[0]["ei"].data
+
+                data = self.Eos.STP(rho, ei, quantity=baseqt)
+                data -= data.mean(axis=(1,2)).reshape((-1,1,1))
+                self.unit = self.Eos.unit(quantity=baseqt)
+            elif self.quantityCombo.currentText() in ["Pressure fluctuation (P-<P>z)/<P>z"]:
+                baseqt = self.quantityCombo.currentText().split()[0]
+                rho = self.modelfile[mod].dataset[dat].box[0]["rho"].data
+                ei = self.modelfile[mod].dataset[dat].box[0]["ei"].data
+
+                dval = self.Eos.STP(rho, ei, quantity=baseqt)
+                dmean = dval.mean(axis=(1,2)).reshape((-1,1,1))
+                data = ne.evaluate("(dval-dmean)/dmean")
+                self.unit = "&Delta;<i>{0:s} /&lang;{0:s}&rang;<sub>z</sub></i>".format(baseqt[0])
             elif self.quantityCombo.currentText() == "Plasma beta":
                 bb1 = self.modelfile[mod].dataset[dat].box[0]["bb1"].data
                 bb2 = self.modelfile[mod].dataset[dat].box[0]["bb2"].data
@@ -2175,7 +2192,7 @@ class MultiPlotWind(BasicWindow):
                                       ("Absolute avg. magnetic field (z-component)", "bc3_xabsmean"),
                                       ("Avg. squared magnetic field (x-component)", "bc1_xmean2"),
                                       ("Avg. squared magnetic field (y-component)", "bc2_xmean2"),
-                                      ("Avg. squared magnetic field (z-component)", "bc3_xmean2")]),
+                                      ("Avg. squared magnetic field (z-component)", "bc3_xmean2")])
 
             # --- First list component: intensities in topmost layer
             # --- Second list component: density averaged over plane (1D!)
@@ -2252,7 +2269,9 @@ class MultiPlotWind(BasicWindow):
         # interpolated data, if already loaded
 
         if self.eos and (self.fileType == "mean" or self.fileType == "cobold"):
-            self.quantityList.append(OrderedDict([("Temperature", "temp"), ("Entropy", "entr"), ("Pressure", "press"),
+            self.quantityList.append(OrderedDict([("Temperature", "temp"), ("Temperature fluctuation T-<T>z", "temp"),
+                                                  ("Entropy", "entr"), ("Entropy fluctuation s-<s>z", "entr"),
+                                                  ("Pressure", "press"), ("Pressure fluctuation (P-<P>z)/<P>z", "press"),
                                                   ("Adiabatic coefficient G1", "gamma1"), ("Mach Number", "mach"),
                                                   ("Adiabatic coefficient G3", "gamma3"), ("Sound velocity", "c_s"),
                                                   ("Mean molecular weight", "mu"), ("Plasma beta", "beta"),

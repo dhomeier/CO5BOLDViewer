@@ -342,7 +342,7 @@ class MainWindow(wind.BasicWindow):
                                       ("Absolute avg. magnetic field (z-component)", "bc3_xabsmean"),
                                       ("Avg. squared magnetic field (x-component)", "bc1_xmean2"),
                                       ("Avg. squared magnetic field (y-component)", "bc2_xmean2"),
-                                      ("Avg. squared magnetic field (z-component)", "bc3_xmean2")]),
+                                      ("Avg. squared magnetic field (z-component)", "bc3_xmean2")])
 
             # --- First list component: intensities in topmost layer
             # --- Second list component: density averaged over plane (1D!)
@@ -479,7 +479,9 @@ class MainWindow(wind.BasicWindow):
         # interpolated data, if already loaded
 
         if self.eos and (self.fileType == "mean" or self.fileType == "cobold"):
-            self.quantityList.append(OrderedDict([("Temperature", "temp"), ("Entropy", "entr"), ("Pressure", "press"),
+            self.quantityList.append(OrderedDict([("Temperature", "temp"), ("Temperature fluctuation T-<T>z", "temp"),
+                                                  ("Entropy", "entr"), ("Entropy fluctuation s-<s>z", "entr"),
+                                                  ("Pressure", "press"), ("Pressure fluctuation (P-<P>z)/<P>z", "press"),
                                                   ("Adiabatic coefficient G1", "gamma1"), ("Mach Number", "mach"),
                                                   ("Adiabatic coefficient G3", "gamma3"), ("Sound velocity", "c_s"),
                                                   ("Mean molecular weight", "mu"), ("Plasma beta", "beta"),
@@ -565,8 +567,10 @@ class MainWindow(wind.BasicWindow):
             # Check if self.quantityList exists (model file already loaded?)
 
             if not self.eos and hasattr(self, 'quantityList'):
-                self.quantityList.append(OrderedDict([("Temperature", "temp"), ("Entropy", "entr"),
-                                                      ("Pressure", "press"), ("Adiabatic coefficient G1", "gamma1"),
+                self.quantityList.append(OrderedDict([("Temperature", "temp"), ("Temperature fluctuation T-<T>z", "temp"),
+                                                      ("Entropy", "entr"), ("Entropy fluctuation s-<s>z", "entr"),
+                                                      ("Pressure", "press"), ("Pressure fluctuation (P-<P>z)/<P>z", "press"),
+                                                      ("Adiabatic coefficient G1", "gamma1"),
                                                       ("Adiabatic coefficient G3", "gamma3"), ("Sound velocity", "c_s"),
                                                       ("Mach Number", "mach"), ("Mean molecular weight", "mu"),
                                                       ("Plasma beta", "beta"), ("c_s / c_A", "csca")]))
