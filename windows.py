@@ -774,8 +774,6 @@ class BasicWindow(QtWidgets.QMainWindow):
             if not self.opa or not self.eos:
                 self.x3Combo.setCurrentIndex(0)
                 self.x3Combo.setDisabled(True)
-                if self.fileType == "cobold":
-                    self.quantityCombo.setCurrentIndex(1)
             elif self.opa and self.eos and self.x3Combo.currentIndex() == 1:
                 rho = self.modelfile[self.modelind].dataset[self.dsind].box[0]["rho"].data
                 ei = self.modelfile[self.modelind].dataset[self.dsind].box[0]["ei"].data
@@ -789,6 +787,8 @@ class BasicWindow(QtWidgets.QMainWindow):
                     tau = self.Opa.tau(rho, axis=0, T=T, P=P, zb=self.xb3*1.e5)
                 self.minTauEdit.setText(str(tau[:-1].min()))
                 self.maxTauEdit.setText(str(tau[:-1].max()))
+            if self.fileType == "cobold":
+                self.quantityCombo.setCurrentIndex(1)
             if self.x3Combo.currentIndex() == 0:
                 self.currentX3Title.setText("iz:")
                 self.actualX3Title.setText("z [km]:")
@@ -1209,6 +1209,9 @@ class BasicWindow(QtWidgets.QMainWindow):
         start = time.time()
         clight = 2.9979248e10
         const = 4.0 * np.pi
+        # --- Stefan-Boltzmann constant
+        # sigma_sb = astropy.constants.sigma_sb.to('erg/(s cm2 K4)').value
+        sigma_sb = 5.670373e-05
 
         ver = np.version.version
         # self.constGrid = False
@@ -1591,8 +1594,13 @@ class BasicWindow(QtWidgets.QMainWindow):
             data = self.modelfile[mod].dataset[dat].box[self.boxind][self.typeind].data.squeeze()
             self.unit = self.modelfile[mod].dataset[dat].box[self.boxind][self.typeind].params["u"]
         else:
-            data = self.modelfile[mod][self.typeind].squeeze()
-            self.unit = self.modelfile[mod].unit(self.typeind)
+            if self.quantityCombo.currentText() == "Effective temperature":
+                ferb = self.modelfile[mod][self.typeind].squeeze()
+                data = ne.evaluate("(ferb/sigma_sb)**0.25")
+                self.unit = "K"
+            else:
+                data = self.modelfile[mod][self.typeind].squeeze()
+                self.unit = self.modelfile[mod].unit(self.typeind)
         self.DataDim = data.ndim
 
         if self.x3Combo.currentIndex() == 1:
@@ -2192,7 +2200,8 @@ class MultiPlotWind(BasicWindow):
                                       ("Absolute avg. magnetic field (z-component)", "bc3_xabsmean"),
                                       ("Avg. squared magnetic field (x-component)", "bc1_xmean2"),
                                       ("Avg. squared magnetic field (y-component)", "bc2_xmean2"),
-                                      ("Avg. squared magnetic field (z-component)", "bc3_xmean2")])
+                                      ("Avg. squared magnetic field (z-component)", "bc3_xmean2"),
+                                      ("Effective temperature", "ferb_xmean")])
 
             # --- First list component: intensities in topmost layer
             # --- Second list component: density averaged over plane (1D!)

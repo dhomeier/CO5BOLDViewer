@@ -342,7 +342,8 @@ class MainWindow(wind.BasicWindow):
                                       ("Absolute avg. magnetic field (z-component)", "bc3_xabsmean"),
                                       ("Avg. squared magnetic field (x-component)", "bc1_xmean2"),
                                       ("Avg. squared magnetic field (y-component)", "bc2_xmean2"),
-                                      ("Avg. squared magnetic field (z-component)", "bc3_xmean2")])
+                                      ("Avg. squared magnetic field (z-component)", "bc3_xmean2"),
+                                      ("Effective temperature", "ferb_xmean")])
 
             # --- First list component: intensities in topmost layer
             # --- Second list component: density averaged over plane (1D!)
@@ -586,6 +587,7 @@ class MainWindow(wind.BasicWindow):
             self.quantityCombo.clear()
             for type in self.quantityList:
                 self.quantityCombo.addItems(type.keys())
+            self.initialLoad()
 
             self.eos = True
 
@@ -629,6 +631,12 @@ class MainWindow(wind.BasicWindow):
 
                 self.tauUnityCheck.setDisabled(False)
                 self.x3Combo.setDisabled(False)
+
+                self.quantityCombo.clear()
+                for type in self.quantityList:
+                    self.quantityCombo.addItems(type.keys())
+                self.initialLoad()
+
             self.opa = True
 
             QtWidgets.QApplication.restoreOverrideCursor()
@@ -873,12 +881,16 @@ class MainWindow(wind.BasicWindow):
                     return self.data.mean(axis=axis), limits
                 else:
                     return self.data[plotSlice].squeeze(), limits
+            elif self.DataDim == 2:
+                limits = np.array([self.x3min, self.x3max])
+                return self.data.mean(axis=1), limits
             else:
-                self.msgBox.setText("Dimension of plot could not be identified.")
+                self.msgBox.setText("Dimension of data could not be identified: >{:d}<".format(self.DataDim))
                 self.msgBox.exec_()
                 return None
         else:
-            self.msgBox.setText("Dimension not legal.")
+            #self.msgBox.setText("Dimension not legal.")
+            self.msgBox.setText("Dimension of plot could not be identified.")
             self.msgBox.exec_()
             return None
 
@@ -993,7 +1005,7 @@ class MainWindow(wind.BasicWindow):
             elif self.DataDim == 1:
                 self.plotBox.plotFig(data, limits=limits, window=window)
             else:
-                self.msgBox.setText("Dimension of plot could not be identified.")
+                self.msgBox.setText("Dimension of data could not be identified: >{:d}<".format(self.DataDim))
                 self.msgBox.exec_()
 
         elif self.plotDim == 1:
@@ -1003,10 +1015,11 @@ class MainWindow(wind.BasicWindow):
                 else:
                     self.plotBox.plotFig(data, limits=limits, window=window)
             else:
-                self.msgBox.setText("Dimension of plot could not be identified.")
+                self.msgBox.setText("Dimension of data could not be identified: >{:d}<".format(self.DataDim))
                 self.msgBox.exec_()
         else:
-            self.msgBox.setText("Dimension not legal.")
+            self.msgBox.setText("Dimension of plot could not be identified.")
+            self.msgBox.setText("Dimension not legal: >{:d}<".format(self.plotDim))
             self.msgBox.exec_()
 
         self.oldData = data
